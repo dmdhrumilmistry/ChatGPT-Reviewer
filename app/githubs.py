@@ -4,6 +4,7 @@
 import os
 import requests
 from github import Github
+import re
 
 
 # List of event types
@@ -12,6 +13,8 @@ EVENT_TYPE_COMMENT = "comment"
 EVENT_TYPE_PULL_REQUEST = "pull_request"
 EVENT_TYPE_OTHER = "other"
 
+# ignore file names
+IGNORE_FILES_REGEX = os.getenv('IGNORE_FILES_REGEX', r'.*\.lock|requirements.txt') # ignore all lock files and requirements by default
 
 class GithubClient:
     '''Github API client'''
@@ -92,7 +95,7 @@ class GithubClient:
                 pr.title, pr.body, changes)
             completion = self.get_completion(prompt)
             if completion != '':
-                reviewComments = f'''@{pr.user.login} Thanks for your contributions!\n\n{completion}'''
+                reviewComments = f'''@{pr.user.login} PR has been reviewed successfully! Details are listed below:\n\n{completion}'''
                 pr.create_issue_comment(reviewComments)
             return
 
@@ -100,6 +103,10 @@ class GithubClient:
         files_changed = pr.get_files()
         reviews = []
         for file in files_changed:
+            if re.match(IGNORE_FILES_REGEX, file):
+                print(f'{file} has been ignored from analysis.')
+                continue
+
             file_changes = self.cut_changes(
                 file.previous_filename, file.filename, file.patch)
             prompt = self.openai_client.get_file_prompt(
@@ -109,7 +116,7 @@ class GithubClient:
                 continue
             if self.comment_per_file:
                 # Create a review comment on the file
-                reviewComments = f'''@{pr.user.login} Thanks for your contributions!\n\n{completion}'''
+                reviewComments = f'''@{pr.user.login} PR has been reviewed successfully! Details are listed below:\n\n{completion}'''
                 pr.create_review_comment(body=reviewComments,
                                          commit_id=list(pr.get_commits())[-1],
                                          path=file.filename,
@@ -120,5 +127,5 @@ class GithubClient:
 
         if len(reviews) > 0:
             # Create a review comment on the PR
-            reviewComments = f'''@{pr.user.login} Thanks for your contributions!\n\n{''.join(reviews)}'''
+            reviewComments = f'''@{pr.user.login} PR has been reviewed successfully! Details are listed below:\n\n{''.join(reviews)}'''
             pr.create_issue_comment(reviewComments)
