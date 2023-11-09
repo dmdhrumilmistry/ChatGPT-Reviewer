@@ -43,14 +43,15 @@ class OpenAIClient:
 
     @backoff.on_exception(backoff.expo,
                           (openai._exceptions.RateLimitError,
-                           openai._exceptions.APIConnectionError,
-                           openai._exceptions.ServiceUnavailableError),
+                        #    openai._exceptions.ServiceUnavailableError,
+                           openai._exceptions.APIConnectionError),
                           max_time=300)
     def get_completion(self, prompt) -> str:
         if self.model.startswith("gpt-"):
             return self.get_completion_chat(prompt)
         else:
             return self.get_completion_text(prompt)
+
 
     def get_completion_chat(self, prompt) -> str:
         '''Invoke OpenAI API to get chat completion'''
