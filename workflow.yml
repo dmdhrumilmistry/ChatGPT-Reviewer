@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install git -y
-          git clone https://github.com/dmdhrumilmistry/ChatGPT-Reviewer.git --depth=1 /tmp/ChatGPT-Reviewer
+          git clone https://github.com/uniacco-tech/ChatGPT-Reviewer.git --depth=1 /tmp/ChatGPT-Reviewer
           python3 -m venv .env
           source .env/bin/activate
           python -m pip install --upgrade pip
